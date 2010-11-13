@@ -1,0 +1,64 @@
+<!doctype>
+<html>
+  <head>
+    <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css" />
+    <link href="/stylesheets/print.css" media="print" rel="stylesheet" type="text/css" />
+    <!--[if IE]>
+        <link href="/stylesheets/ie.css" media="screen, projection" rel="stylesheet" type="text/css" />
+    <![endif]-->
+
+    <script id='tweetTemplate' type='text/html'>
+      <li class='tweet' data-tweetId='${id}' data-from='${from_user}' data-created_at='${created_at}'>
+        <img src='${profile_image_url}'>
+        <span class='from'>${from_user}</span>
+        <p class='text'>${text}</p>
+        <div class='data'>${JSON.stringify(this)}</div>
+      </li>
+    </script>
+  </head>
+
+  <body>
+    Tweets Yo!
+
+    <div id='search'>
+      Search Tweets
+      <input type='search' id='tweetSearch' data-bind='value: search, valueUpdate: "afterkeydown"'>
+    </div>
+
+    <ul id='tweets' data-bind="template: {name: 'tweetTemplate', foreach: tweets}"></ul>
+
+    <script src='javascripts/jquery-1.4.4.min.js'></script>
+    <script src='javascripts/jquery.tmpl.js'></script>
+    <script src='javascripts/knockout-1.1.0.js'></script>
+
+    <script>
+      var tweetManager =  {};
+      var currentTimer;
+      tweetManager.tweets = ko.observableArray([]);
+      tweetManager.search = ko.observable("railscamp");
+
+      ko.applyBindings(tweetManager, document.getElementById('tweetSearch'));
+      ko.applyBindings(tweetManager, $('#tweets')[0]);
+
+      var tweetFetcher = function(){
+        console.log( tweetManager.search());
+        if (tweetManager.search() && tweetManager.search().length > 0){
+          $.getJSON('http://search.twitter.com/search.json?q='+tweetManager.search()+'&callback=?', function(data){
+
+            tweetManager.tweets.removeAll(tweetManager.tweets());
+
+            for(i=0; i<data.results.length; i++){
+              tweetManager.tweets.push(data.results[i]);
+            }
+            setTimeout(tweetFetcher, 5000);
+          });
+        } else {
+          setTimeout(tweetFetcher, 1000);
+        }
+      };
+      setTimeout(tweetFetcher, 5000); // launch the twitter fetcher
+    </script>
+
+  </body>
+</html>
+
